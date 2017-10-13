@@ -1,15 +1,13 @@
-# Oline_sack_rate
-
-#read in data Using package: NFLscapR 
-pbp_2015 <- season_play_by_play(2015)
-T<-c(17,18,33,60) # columns I want 
-Datanew <- pbp_2015[,T]
+#Another try
+#read in data 
+#pbp_2015 <- season_play_by_play(2015)
+T<-c(17,18,33,38,60) # columns I want 
+Datanew <- pbp_2016[,T]
 View(Datanew) # Just because 
 Datanew$oteamcode <- NA # for computations later 
 Datanew$dteamcode <- NA 
-TEAMCODES <- c("DEN", "SF", "SEA", "NE", "GB", "ATL", "BAL", "HOU", "NO", "PIT", "NYG", "CIN", "WAS", "CHI", "DAL", "MIN", "DET", "MIA", "CAR", "IND", "SD", "TB", "PHI", "STL", "KC", "NYJ", "BUF", "CLE", "ARI", "TEN", "OAK", "JAX")
+TEAMCODESarray <- c("DEN", "SF", "SEA", "NE", "GB", "ATL", "BAL", "HOU", "NO", "PIT", "NYG", "CIN", "WAS", "CHI", "DAL", "MIN", "DET", "MIA", "CAR", "IND", "SD", "TB", "PHI", "LA", "KC", "NYJ", "BUF", "CLE", "ARI", "TEN", "OAK", "JAX")
 TEAMNUM <-c(1:32)
-#I do this to make the data easier to work with. For the "for" loop. If there is an easier way would love to hear it. 
 Datanew$oteamcode[Datanew$posteam == "DEN"] <- 1
 Datanew$oteamcode[Datanew$posteam == "SF"] <- 2
 Datanew$oteamcode[Datanew$posteam == "SEA"] <- 3
@@ -33,7 +31,7 @@ Datanew$oteamcode[Datanew$posteam == "IND"] <- 20
 Datanew$oteamcode[Datanew$posteam == "SD"] <- 21
 Datanew$oteamcode[Datanew$posteam == "TB"] <- 22
 Datanew$oteamcode[Datanew$posteam == "PHI"] <- 23
-Datanew$oteamcode[Datanew$posteam == "STL"] <- 24
+Datanew$oteamcode[Datanew$posteam == "LA"] <- 24
 Datanew$oteamcode[Datanew$posteam == "KC"] <- 25
 Datanew$oteamcode[Datanew$posteam == "NYJ"] <- 26
 Datanew$oteamcode[Datanew$posteam == "BUF"] <- 27
@@ -66,7 +64,7 @@ Datanew$dteamcode[Datanew$DefensiveTeam == "IND"] <- 20
 Datanew$dteamcode[Datanew$DefensiveTeam == "SD"] <- 21
 Datanew$dteamcode[Datanew$DefensiveTeam == "TB"] <- 22
 Datanew$dteamcode[Datanew$DefensiveTeam == "PHI"] <- 23
-Datanew$dteamcode[Datanew$DefensiveTeam == "STL"] <- 24
+Datanew$dteamcode[Datanew$DefensiveTeam == "LA"] <- 24
 Datanew$dteamcode[Datanew$DefensiveTeam == "KC"] <- 25
 Datanew$dteamcode[Datanew$DefensiveTeam == "NYJ"] <- 26
 Datanew$dteamcode[Datanew$DefensiveTeam == "BUF"] <- 27
@@ -79,8 +77,10 @@ Datanew$dteamcode[Datanew$DefensiveTeam == "JAC"] <- 32
 NDatanew <- na.omit(Datanew)#create new data.frame omitting rows with NA's 
 OLine <- rep(0,32)
 DLine <- rep(0,32)
+OLineHit<-rep(0,32)
 for (i in c(1:32)){
   OLine[i]<- sum(NDatanew$Sack[NDatanew$oteamcode== i])/sum(NDatanew$PassAttempt[NDatanew$oteamcode==i])
+  OLineHit[i]<- sum(NDatanew$QBHit[NDatanew$oteamcode== i])/sum(NDatanew$PassAttempt[NDatanew$oteamcode==i])
   DLine[i]<- sum(NDatanew$Sack[NDatanew$dteamcode== i])/sum(NDatanew$PassAttempt[NDatanew$dteamcode==i])
 }
 
@@ -96,9 +96,32 @@ for (i in c(1:32)){ #to work through all offenses
 }
 F<- cbind(X, WORK)
 f<- as.data.frame(F)
-DEN<- f$X[f$WORK == 1]
-DENVER <- cbind(DLine, DEN)
-plot(DENVER)
-DENVER <- as.data.frame(DENVER)
-fit<- lm(DEN~ DLine, data = DENVER)
-summary(fit)
+#IND<- f$X[f$WORK == 20]
+#INDIANAPOLIS <- cbind(DLine, IND)
+#plot(INDIANAPOLIS)
+#INDIANAPOLIS <- as.data.frame(INDIANAPOLIS)
+#fit<- lm(DEN~ DLine, data = INDIANAPOLIS)
+#summary(fit)
+
+z = 1
+for (w in c(0:31)){
+  for(r in c(1:32)){
+    f[z,3]<- r
+    z=z+1
+  }
+}
+f<- na.omit(f)
+for(M in c(1:32)){
+  f$V3[f$D==M]<-DLine[M]
+}
+f$RATIO<- f$X/f$V3
+OL_RANK<- rep(0,32)
+for (e in c(1:32)){
+  OL_RANK[e]<-mean(f$RATIO[f$WORK==e])
+}
+OL_RANK<- as.data.frame(OL_RANK)
+OL_RANK$TEAMNAME<- NA
+OL_RANK$TEAMNAME<-TEAMCODESarray
+OL_RANK$rank<- NA
+OL_RANK$rank[order(OL_RANK$OL_RANK)] <- 1:nrow(OL_RANK)
+
